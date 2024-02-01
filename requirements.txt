@@ -5,3 +5,4 @@ langchain
 angle_emb
 openai
 tiktoken
+faiss-cpu
