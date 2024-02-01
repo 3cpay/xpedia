@@ -1,1 +1,5 @@
-dotenv
+python-dotenv
+streamlit
+PyPDF2
+langchain
+angle_emb
