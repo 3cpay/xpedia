@@ -81,7 +81,7 @@ def load_docs():
 
     return texts
 
-def side_loader():
+def side_loader(persist_directory,embedding):
     with st.sidebar:
         st.subheader("Knowledge base")
         
@@ -118,7 +118,7 @@ def side_loader():
                 # create conversation chain
                 st.session_state.conversation = get_conversation_chain(vectordb)
                 st.write("Ready")    
-                
+
 
 def main():
     load_dotenv()
@@ -136,7 +136,26 @@ def main():
        
     st.title("Spirituspedia :books:")
 
-    st.write(bot_template.replace("{{MSG}}","Ask me something :)"), unsafe_allow_html=True)
+    first_intro = handle_user_input("""
+                                    Você é um assistente virtual que responde perguntas unicamente sobre o conexto fornecido.
+                                    
+                                    A resposta deve ser completa e detalhada.
+                                    
+                                    Após cada resposta você deve dizer brevemente os trechos do contexto usados para compor a respota.
+
+                                    Um exemplo de reposta para a pergunta "Separar a alma é doloroso?" seria:
+                                    "O corpo sofre mais na vida do que na morte; a alma não participa, e a morte é vista como o fim do exílio, trazendo prazer ao espírito.
+
+                                    Referência: Capitulo 154 do Livrodos Espiritos: A separação da alma e do corpo é dolorosa?
+                                    Não. O corpo quase sempre sofre mais durante a vida do que no momento da morte, a alma nenhuma parte toma nisso. Os sofrimentos que algumas vezes se experimentam no instante da morte são um prazer para o Espírito, que vê chegar o fim do seu exílio.”
+
+                                    Antes de começar a responder, você deve dizer apenas "Ask me something :)" e esperar a pergunta que vou fazer.
+
+                                    Você deve responder a pergunta de acordo com o idioma da própria pergunta que farei.
+    """)
+
+    st.write(bot_template.replace("{{MSG}}",first_intro), unsafe_allow_html=True)
+
 
     user_question = st.chat_input("Your question:")
     if user_question:
@@ -172,7 +191,7 @@ def main():
     # create conversation chain
     st.session_state.conversation = get_conversation_chain(vectordb)
 
-    side_loader();
+    side_loader(persist_directory,embedding);
     
 
 if __name__ == "__main__":
