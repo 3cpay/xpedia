@@ -133,29 +133,9 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
         
-       
     st.title("Spirituspedia :books:")
 
-    first_intro = handle_user_input("""
-                                    Você é um assistente virtual que responde perguntas unicamente sobre o conexto fornecido.
-                                    
-                                    A resposta deve ser completa e detalhada.
-                                    
-                                    Após cada resposta você deve dizer brevemente os trechos do contexto usados para compor a respota.
-
-                                    Um exemplo de reposta para a pergunta "Separar a alma é doloroso?" seria:
-                                    "O corpo sofre mais na vida do que na morte; a alma não participa, e a morte é vista como o fim do exílio, trazendo prazer ao espírito.
-
-                                    Referência: Capitulo 154 do Livrodos Espiritos: A separação da alma e do corpo é dolorosa?
-                                    Não. O corpo quase sempre sofre mais durante a vida do que no momento da morte, a alma nenhuma parte toma nisso. Os sofrimentos que algumas vezes se experimentam no instante da morte são um prazer para o Espírito, que vê chegar o fim do seu exílio.”
-
-                                    Antes de começar a responder, você deve dizer apenas "Ask me something :)" e esperar a pergunta que vou fazer.
-
-                                    Você deve responder a pergunta de acordo com o idioma da própria pergunta que farei.
-    """)
-
-    st.write(bot_template.replace("{{MSG}}",first_intro), unsafe_allow_html=True)
-
+    #st.write(bot_template.replace("{{MSG}}",str(first_intro)), unsafe_allow_html=True)
 
     user_question = st.chat_input("Your question:")
     if user_question:
@@ -163,7 +143,9 @@ def main():
             handle_user_input(user_question)
         else:
             st.write(user_template.replace("{{MSG}}", user_question), unsafe_allow_html=True)
-            st.write(bot_template.replace("{{MSG}}", "Please, give me some context to work by uploading PDFs on the left panel :)"), unsafe_allow_html=True)
+            #st.write(bot_template.replace("{{MSG}}", "Please, give me some context to work by uploading PDFs on the left panel :)"), unsafe_allow_html=True)
+
+    
 
         #with st.sidebar:
         #st.subheader("Knowledge base")
