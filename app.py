@@ -1,14 +1,19 @@
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
-from angle_emb import AnglE
-from langchain.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.vectorstores.chroma import Chroma
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
+from angle_emb import AnglE
 from htmlTemplates import css, bot_template, user_template
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader
+
 
 def get_pdf_text(pdf_docs): 
     text = ""
@@ -19,7 +24,7 @@ def get_pdf_text(pdf_docs):
     return text 
 
 def get_text_chunks(rawtext):
-   text_splitter = CharacterTextSplitter(
+   text_splitter = RecursiveCharacterTextSplitter(
        separator = "\n",
        chunk_size = 1000,
        chunk_overlap = 200,
@@ -58,6 +63,25 @@ def handle_user_input(user_question):
         else:
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
+def check_directory():
+    count = load_docs()
+
+    #return the count of items in the list texts
+    return len(count)
+
+def load_docs():
+    loader = DirectoryLoader('./ContextFiles/',glob="./*.pdf", loader_cls = PyPDFLoader)
+    documents = loader.load()
+    
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200)
+    
+    texts = text_splitter.split_documents(documents)
+
+    return texts
+
+
 def main():
     load_dotenv()
 
@@ -70,13 +94,12 @@ def main():
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
-
+        
+       
     st.title("Spirituspedia :books:")
 
     st.write(bot_template.replace("{{MSG}}","Ask me something :)"), unsafe_allow_html=True)
 
-
-    #user_question = st.text_input("Your question:")
     user_question = st.chat_input("Your question:")
     if user_question:
         if hasattr(st.session_state, 'conversation') and st.session_state.conversation:
@@ -85,25 +108,70 @@ def main():
             st.write(user_template.replace("{{MSG}}", user_question), unsafe_allow_html=True)
             st.write(bot_template.replace("{{MSG}}", "Please, give me some context to work by uploading PDFs on the left panel :)"), unsafe_allow_html=True)
 
+        #with st.sidebar:
+        #st.subheader("Knowledge base")
+        #pdf_docs = st.file_uploader("Files", accept_multiple_files=True)
+        #if st.button("Process"):
+        #    with st.spinner("Processing..."):
+        #        # get the PDF text
+        #        rawtext = get_pdf_text(pdf_docs)
+        #                        
+        #        # get the text chunks
+        #        text_chunks = get_text_chunks(rawtext)
+        #
+        #        # create vector (use get_vectorstore_gf for huggingface)
+        #        vectorstore = get_vectorstore(text_chunks)
+        #        # create conversation chain
+        #        st.session_state.conversation = get_conversation_chain(vectorstore)
+        #        st.write("Ready")
+    
+    embedding = OpenAIEmbeddings()
+    persist_directory = 'db'
+    vectordb = Chroma(
+            persist_directory=persist_directory,
+            embedding_function=embedding
+        )        
+    # create conversation chain
+    st.session_state.conversation = get_conversation_chain(vectordb)
+
     with st.sidebar:
         st.subheader("Knowledge base")
-        pdf_docs = st.file_uploader("Files", accept_multiple_files=True)
+        
+        vectordb = Chroma(
+            persist_directory=persist_directory,
+            embedding_function=embedding
+            ) 
+        
+        #directory_count = check_directory()
+        #st.write("Folder: " + str(directory_count[1]) + " chunk(s) in " + str(directory_count[0]) + " file(s)")
+        
         if st.button("Process"):
             with st.spinner("Processing..."):
-                # get the PDF text
-                rawtext = get_pdf_text(pdf_docs)
-                                
-                # get the text chunks
-                text_chunks = get_text_chunks(rawtext)
-                # st.write(text_chunks)
+                 
+                vectordb.delete_collection()
+                vectordb.persist()
+                vectordb = None
+                
+                texts = load_docs()
 
-                # create vector (use get_vectorstore_gf for huggingface)
-                vectorstore = get_vectorstore(text_chunks)
+                vectordb = Chroma.from_documents(
+                        documents=texts, 
+                        embedding=embedding, 
+                        persist_directory=persist_directory
+                    )
+                    
+                vectordb.persist()
+                vectordb = None
 
+                vectordb = Chroma(
+                        persist_directory=persist_directory,
+                        embedding_function=embedding
+                    )        
                 # create conversation chain
-                st.session_state.conversation = get_conversation_chain(vectorstore)
+                st.session_state.conversation = get_conversation_chain(vectordb)
                 st.write("Ready")
 
+    
 
 if __name__ == "__main__":
     main()

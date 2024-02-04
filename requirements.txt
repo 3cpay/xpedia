@@ -1,8 +1,11 @@
 python-dotenv
 streamlit
 PyPDF2
+langchain-community
 langchain
+langchain-openai
 angle_emb
 openai
 tiktoken
 faiss-cpu
+chromadb
