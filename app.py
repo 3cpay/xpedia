@@ -81,6 +81,44 @@ def load_docs():
 
     return texts
 
+def side_loader():
+    with st.sidebar:
+        st.subheader("Knowledge base")
+        
+        vectordb = Chroma(
+            persist_directory=persist_directory,
+            embedding_function=embedding
+            ) 
+        
+        #directory_count = check_directory()
+        #st.write("Folder: " + str(directory_count[1]) + " chunk(s) in " + str(directory_count[0]) + " file(s)")
+        
+        if st.button("Process"):
+            with st.spinner("Processing..."):
+                 
+                vectordb.delete_collection()
+                vectordb.persist()
+                vectordb = None
+                
+                texts = load_docs()
+
+                vectordb = Chroma.from_documents(
+                        documents=texts, 
+                        embedding=embedding, 
+                        persist_directory=persist_directory
+                    )
+                    
+                vectordb.persist()
+                vectordb = None
+
+                vectordb = Chroma(
+                        persist_directory=persist_directory,
+                        embedding_function=embedding
+                    )        
+                # create conversation chain
+                st.session_state.conversation = get_conversation_chain(vectordb)
+                st.write("Ready")    
+                
 
 def main():
     load_dotenv()
@@ -134,43 +172,7 @@ def main():
     # create conversation chain
     st.session_state.conversation = get_conversation_chain(vectordb)
 
-    with st.sidebar:
-        st.subheader("Knowledge base")
-        
-        vectordb = Chroma(
-            persist_directory=persist_directory,
-            embedding_function=embedding
-            ) 
-        
-        #directory_count = check_directory()
-        #st.write("Folder: " + str(directory_count[1]) + " chunk(s) in " + str(directory_count[0]) + " file(s)")
-        
-        if st.button("Process"):
-            with st.spinner("Processing..."):
-                 
-                vectordb.delete_collection()
-                vectordb.persist()
-                vectordb = None
-                
-                texts = load_docs()
-
-                vectordb = Chroma.from_documents(
-                        documents=texts, 
-                        embedding=embedding, 
-                        persist_directory=persist_directory
-                    )
-                    
-                vectordb.persist()
-                vectordb = None
-
-                vectordb = Chroma(
-                        persist_directory=persist_directory,
-                        embedding_function=embedding
-                    )        
-                # create conversation chain
-                st.session_state.conversation = get_conversation_chain(vectordb)
-                st.write("Ready")
-
+    side_loader();
     
 
 if __name__ == "__main__":
