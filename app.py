@@ -173,7 +173,7 @@ def main():
     # create conversation chain
     st.session_state.conversation = get_conversation_chain(vectordb)
 
-    side_loader(persist_directory,embedding);
+    #side_loader(persist_directory,embedding);
     
 
 if __name__ == "__main__":
