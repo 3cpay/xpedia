@@ -8,5 +8,5 @@ angle_emb
 openai
 tiktoken
 faiss-cpu
-chromadb
+chromadb==0.3.29
 pysqlite3-binary
